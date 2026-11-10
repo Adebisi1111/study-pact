@@ -26,6 +26,15 @@ import {
   isNotFoundError,
 } from "./ui";
 import { navigate } from "./App";
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  ClockIcon,
+  LayersIcon,
+  SearchIcon,
+  UsersIcon,
+} from "./icons";
 
 type Session = {
   id: number;
@@ -322,7 +331,7 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
 
   if (loading) {
     return (
-      <div className="fade-in">
+      <div className="fade-in page-narrow">
         <button className="back-link" onClick={() => navigate("#/")}>← Back</button>
         <div className="stack">
           <Skeleton height={200} />
@@ -335,18 +344,24 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
 
   if (error === "not-found") {
     return (
-      <div className="fade-in">
+      <div className="fade-in page-narrow">
         <button className="back-link" onClick={() => navigate("#/")}>← Back</button>
         <div className="card empty">
-          <div className="empty-icon">🔍</div>
+          <div className="empty-icon">
+            <SearchIcon size={30} />
+          </div>
           <div className="empty-title">No pact with ID {id}</div>
           <p className="muted">
             This pact doesn't exist on testnet. Check the link, or create your
             own.
           </p>
-          <div style={{ marginTop: 18 }}>
-            <button className="btn btn-primary" onClick={() => navigate("#/create")}>
+          <div style={{ marginTop: 20 }}>
+            <button
+              className="btn btn-primary"
+              onClick={() => navigate("#/create")}
+            >
               Create a pact
+              <ArrowRightIcon size={15} />
             </button>
           </div>
         </div>
@@ -356,7 +371,7 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
 
   if (error) {
     return (
-      <div className="fade-in">
+      <div className="fade-in page-narrow">
         <button className="back-link" onClick={() => navigate("#/")}>← Back</button>
         <div className="error-box">
           Couldn't load this pact: {error}
@@ -393,7 +408,7 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
   ];
 
   return (
-    <div className="fade-in">
+    <div className="fade-in page-narrow">
       <button className="back-link" onClick={() => navigate("#/")}>← Back</button>
 
       <div className="session-head">
@@ -421,6 +436,7 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
           </span>
           {remaining > 0 && (
             <span className="countdown">
+              <ClockIcon size={13} />
               {status === "open" ? "starts in " : "ends in "}
               {formatDuration(remaining)}
             </span>
@@ -444,7 +460,13 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
                   onClick={join}
                   disabled={busy || connecting}
                 >
-                  {busy ? <Spinner size={16} /> : `Join for ${depositNear} NEAR`}
+                  {busy ? (
+                    <Spinner size={16} />
+                  ) : (
+                    <>
+                      <UsersIcon size={16} /> Join for {depositNear} NEAR
+                    </>
+                  )}
                 </button>
 
                 <div className="divider" />
@@ -455,7 +477,7 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
                   onClick={() => setShowPay((v) => !v)}
                 >
                   Pay with any token
-                  <span className="collapse-caret">▾</span>
+                  <ChevronDownIcon size={16} className="collapse-caret" />
                 </button>
 
                 {showPay && (
@@ -514,6 +536,7 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
                       onClick={previewSwap}
                       disabled={busy}
                     >
+                      <LayersIcon size={15} />
                       Preview swap
                     </button>
 
@@ -606,7 +629,13 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
                   onClick={checkIn}
                   disabled={busy}
                 >
-                  {busy ? <Spinner size={16} /> : "Check in"}
+                  {busy ? (
+                    <Spinner size={16} />
+                  ) : (
+                    <>
+                      <CheckIcon size={16} /> Check in
+                    </>
+                  )}
                 </button>
               </>
             )}
@@ -623,7 +652,13 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
                   onClick={settle}
                   disabled={busy}
                 >
-                  {busy ? <Spinner size={16} /> : "Settle"}
+                  {busy ? (
+                    <Spinner size={16} />
+                  ) : (
+                    <>
+                      <CheckIcon size={16} /> Settle
+                    </>
+                  )}
                 </button>
               </>
             )}
@@ -637,9 +672,13 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
           </div>
           {participants.length === 0 ? (
             <div className="empty" style={{ padding: "20px 0" }}>
-              <div className="empty-icon">👥</div>
+              <div className="empty-icon">
+                <UsersIcon size={28} />
+              </div>
               <div className="empty-title">Nobody yet</div>
-              <p className="hint">Share the invite link to get the first deposit in.</p>
+              <p className="hint">
+                Share the invite link to get the first deposit in.
+              </p>
             </div>
           ) : (
             <div className="participants">

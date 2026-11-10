@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { navigate } from "./App";
+import { BookIcon, ArrowRightIcon, SearchIcon } from "./icons";
 
 const HOW_IT_WORKS = [
   {
@@ -16,7 +17,7 @@ const HOW_IT_WORKS = [
   },
 ];
 
-export default function Home({ accountId }: { accountId: string }) {
+export default function Home() {
   const [openId, setOpenId] = useState("");
 
   const openPact = () => {
@@ -27,7 +28,12 @@ export default function Home({ accountId }: { accountId: string }) {
 
   return (
     <div>
+      {/* Hero */}
       <section className="hero">
+        <div className="eyebrow">
+          <BookIcon size={12} />
+          Study sessions on NEAR
+        </div>
         <h1>
           Put money on <em>showing up</em>.
         </h1>
@@ -41,23 +47,18 @@ export default function Home({ accountId }: { accountId: string }) {
             onClick={() => navigate("#/create")}
           >
             Create a pact
+            <ArrowRightIcon size={15} />
           </button>
-          <a
-            className="btn btn-ghost"
-            href={accountId ? "#/create" : undefined}
-            onClick={(e) => {
-              if (!accountId) {
-                e.preventDefault();
-                navigate("#/create");
-              }
-            }}
-          >
-            How it works ↓
+          <a className="btn btn-ghost" href="#how-it-works">
+            How it works
           </a>
         </div>
       </section>
 
-      <section className="card">
+      <div className="spectral" />
+
+      {/* How it works */}
+      <section className="card" id="how-it-works">
         <div className="card-title">How it works</div>
         <div className="steps">
           {HOW_IT_WORKS.map((step, index) => (
@@ -72,9 +73,10 @@ export default function Home({ accountId }: { accountId: string }) {
         </div>
       </section>
 
+      {/* Open a pact */}
       <section className="card section-gap">
         <div className="card-title">Open a pact</div>
-        <p className="hint" style={{ marginBottom: 14 }}>
+        <p className="hint" style={{ marginBottom: 16 }}>
           Got an invite link or a pact ID? Paste it here.
         </p>
         <div className="field">
@@ -85,7 +87,7 @@ export default function Home({ accountId }: { accountId: string }) {
             id="open-id"
             className="input"
             inputMode="numeric"
-            placeholder="e.g. 1"
+            placeholder="e.g. 3"
             value={openId}
             onChange={(e) => setOpenId(e.target.value.replace(/[^0-9]/g, ""))}
             onKeyDown={(e) => {
@@ -98,13 +100,13 @@ export default function Home({ accountId }: { accountId: string }) {
           onClick={openPact}
           disabled={!openId}
         >
+          <SearchIcon size={15} />
           Open pact
         </button>
       </section>
 
       <p className="hint center section-gap">
-        Testnet only · Deployed at{" "}
-        <span className="mono">studypact-adebisi.testnet</span>
+        Testnet only · <span className="mono">studypact-adebisi.testnet</span>
       </p>
     </div>
   );

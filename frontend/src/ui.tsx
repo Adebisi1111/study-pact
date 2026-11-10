@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { CheckIcon, SpinnerIcon } from "./icons";
 
 /* --------------------------------------------------------------------------
    Toasts
@@ -82,20 +83,7 @@ export function Avatar({ name }: { name: string }) {
 }
 
 export function Spinner({ size = 18 }: { size?: number }) {
-  return (
-    <span
-      style={{
-        width: size,
-        height: size,
-        border: "2px solid rgba(255,255,255,0.25)",
-        borderTopColor: "currentColor",
-        borderRadius: "50%",
-        display: "inline-block",
-        animation: "spin 0.7s linear infinite",
-      }}
-      aria-hidden="true"
-    />
-  );
+  return <SpinnerIcon size={size} aria-hidden="true" />;
 }
 
 export function TxLink({ hash }: { hash: string }) {
@@ -126,7 +114,9 @@ export function Stepper({
         const state = index < current ? "done" : index === current ? "active" : "";
         return (
           <div key={step.title} className={`stepper-item ${state}`}>
-            <div className="stepper-dot">{index < current ? "✓" : index + 1}</div>
+            <div className="stepper-dot">
+              {index < current ? <CheckIcon size={13} /> : index + 1}
+            </div>
             <div className="stepper-content">
               <div className="stepper-title">{step.title}</div>
               <div className="stepper-desc">{step.desc}</div>

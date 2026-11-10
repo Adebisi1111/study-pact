@@ -3,6 +3,7 @@ import { call, view, sha256Hex } from "./near";
 import { nearToYocto } from "./config";
 import { friendlyError, Spinner, TxLink } from "./ui";
 import { navigate } from "./App";
+import { ArrowRightIcon, CheckIcon, CopyIcon, PenIcon } from "./icons";
 
 type Props = {
   accountId: string;
@@ -83,48 +84,83 @@ export default function Create({ accountId, push, connect, connecting }: Props) 
 
   if (createdId) {
     return (
-      <div className="fade-in">
+      <div className="fade-in page-narrow">
         <button className="back-link" onClick={() => navigate("#/")}>
           ← Back
         </button>
 
         <section className="card card-pad-lg center">
-          <div className="empty-icon" style={{ fontSize: 40 }}>
-            🎉
+          <div className="spectral-sm" />
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 999,
+              background: "rgba(26,128,71,0.12)",
+              color: "var(--success)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+            }}
+          >
+            <CheckIcon size={24} />
           </div>
-          <h2 style={{ fontSize: 26, marginBottom: 10 }}>Pact created</h2>
+          <h2 style={{ fontSize: 24, marginBottom: 10 }}>Pact created!</h2>
           <p className="muted" style={{ marginBottom: 22 }}>
-            Share this link with your study group. Anyone with it can open the
-            pact and join.
+            Pact #{createdId} is live. Share the link with your study group —
+            anyone with it can open the pact and join.
           </p>
 
           <div
-            className="input"
             style={{
-              textAlign: "left",
-              wordBreak: "break-all",
-              marginBottom: 14,
-              color: "var(--muted)",
-              fontSize: 14,
+              background: "var(--surface-muted)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--radius-sm)",
+              padding: "12px 14px",
+              marginBottom: 18,
             }}
           >
-            {inviteUrl}
+            <p
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                color: "var(--muted)",
+                marginBottom: 4,
+              }}
+            >
+              Share link
+            </p>
+            <p
+              className="mono"
+              style={{
+                fontSize: 13,
+                color: "var(--ink)",
+                wordBreak: "break-all",
+              }}
+            >
+              {inviteUrl}
+            </p>
           </div>
 
           <div className="hero-actions">
             <button className="btn btn-primary" onClick={copy}>
-              {copied ? "Copied ✓" : "Copy invite link"}
+              {copied ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
+              {copied ? "Copied!" : "Copy link"}
             </button>
             <button
               className="btn btn-ghost"
               onClick={() => navigate(`#/session/${createdId}`)}
             >
-              Open the pact →
+              Open the pact
+              <ArrowRightIcon size={15} />
             </button>
           </div>
 
           {txHash && (
-            <p className="hint" style={{ marginTop: 18 }}>
+            <p className="hint" style={{ marginTop: 20 }}>
               Transaction: <TxLink hash={txHash} />
             </p>
           )}
@@ -134,18 +170,36 @@ export default function Create({ accountId, push, connect, connecting }: Props) 
   }
 
   return (
-    <div className="fade-in">
+    <div className="fade-in page-narrow">
       <button className="back-link" onClick={() => navigate("#/")}>
         ← Back
       </button>
 
-      <section className="card">
-        <h2 style={{ fontSize: 24, marginBottom: 6 }}>Create a pact</h2>
-        <p className="hint" style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: 26, marginBottom: 6 }}>Create a pact</h1>
+        <p className="hint">
           Set the stakes. Your friends deposit the same amount, and the contract
           splits the pot after the session.
         </p>
+      </div>
 
+      {!accountId && (
+        <div className="card center" style={{ marginBottom: 16 }}>
+          <PenIcon
+            size={26}
+            style={{ color: "var(--accent)", margin: "0 auto 10px" }}
+          />
+          <p className="muted" style={{ marginBottom: 14 }}>
+            Connect your wallet to create a pact — you'll be the host.
+          </p>
+          <button className="btn btn-primary" onClick={connect}>
+            <PenIcon size={15} />
+            Connect wallet
+          </button>
+        </div>
+      )}
+
+      <section className="card">
         <div className="field">
           <label className="label" htmlFor="title">
             Title
@@ -226,7 +280,9 @@ export default function Create({ accountId, push, connect, connecting }: Props) 
               <Spinner size={16} /> Creating…
             </>
           ) : (
-            "Create pact"
+            <>
+              <PenIcon size={15} /> Create pact
+            </>
           )}
         </button>
 

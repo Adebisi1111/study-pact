@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { connector, getAccountId } from "./near";
 import { shortId } from "./config";
 import { ToastContainer, useToasts, friendlyError, Spinner } from "./ui";
+import { BookIcon, WalletIcon } from "./icons";
 import Home from "./Home";
 import Create from "./Create";
 import Session from "./Session";
@@ -81,27 +82,35 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <button
-          className="brand"
-          onClick={() => navigate("#/")}
-          aria-label="Study Pact home"
-        >
-          <span className="brand-mark">SP</span>
-          Study Pact
-        </button>
-        {accountId ? (
-          <button className="btn btn-ghost btn-sm" onClick={disconnect}>
-            <span className="mono">{shortId(accountId, 8, 6)}</span>
-          </button>
-        ) : (
+        <div className="header-inner">
           <button
-            className="btn btn-primary btn-sm"
-            onClick={connect}
-            disabled={connecting}
+            className="brand"
+            onClick={() => navigate("#/")}
+            aria-label="Study Pact home"
           >
-            {connecting ? <Spinner size={14} /> : "Connect"}
+            <span className="brand-mark">
+              <BookIcon size={15} />
+            </span>
+            <span className="brand-name">Study Pact</span>
           </button>
-        )}
+          <div className="header-actions">
+            {accountId ? (
+              <button className="btn btn-ghost btn-sm" onClick={disconnect}>
+                <WalletIcon size={14} />
+                <span className="mono">{shortId(accountId, 8, 6)}</span>
+              </button>
+            ) : (
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={connect}
+                disabled={connecting}
+              >
+                {connecting ? <Spinner size={14} /> : <WalletIcon size={14} />}
+                {connecting ? "Connecting…" : "Connect"}
+              </button>
+            )}
+          </div>
+        </div>
       </header>
 
       <main className="fade-in" key={route}>
@@ -121,7 +130,7 @@ export default function App() {
             connecting={connecting}
           />
         ) : (
-          <Home accountId={accountId} />
+          <Home />
         )}
       </main>
 
