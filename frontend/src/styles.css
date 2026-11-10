@@ -37,6 +37,9 @@
   --tap: 44px;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
+  /* Set at runtime from the measured header height (see App.tsx). */
+  --header-h: 69px;
+
   --shadow-card: 0 4px 24px rgba(18, 45, 69, 0.07),
     inset 0 1px 0 rgba(255, 255, 255, 0.55);
   --shadow-pop: 0 8px 32px rgba(18, 45, 69, 0.14);
@@ -111,12 +114,13 @@ code {
   width: 100%;
   max-width: 896px;
   margin: 0 auto;
-  padding: 0 20px 96px;
+  /* Clears the fixed header so nothing is clipped at the top. */
+  padding: var(--header-h) 20px 96px;
 }
 
 @media (min-width: 900px) {
   .app {
-    padding-top: 8px;
+    padding-top: var(--header-h);
   }
 }
 
@@ -137,8 +141,10 @@ code {
 /* ---------- Header ---------- */
 
 .header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 40;
   width: 100%;
   /* Near-solid so nothing bleeds through, even where backdrop-filter
@@ -157,6 +163,8 @@ code {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 20px;
+  /* Keep the brand clear of the notch / status bar on mobile. */
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
 }
 
 .brand {
@@ -671,6 +679,8 @@ code {
   cursor: pointer;
   padding: 8px 0;
   margin-bottom: 8px;
+  /* Keep it clear of the fixed header if it is ever scrolled into view. */
+  scroll-margin-top: calc(var(--header-h) + 12px);
 }
 
 .back-link:hover {

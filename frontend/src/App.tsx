@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { connector, getAccountId } from "./near";
 import { shortId } from "./config";
 import { ToastContainer, useToasts, friendlyError, Spinner } from "./ui";
@@ -76,12 +76,38 @@ export default function App() {
   const route = useHashRoute();
   const { toasts, push, dismiss } = useToasts();
   const { accountId, connecting, connect, disconnect } = useWallet(push);
+  const headerRef = useRef<HTMLElement | null>(null);
+
+  // Expose the real header height to CSS so the content can clear it.
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const update = () => {
+      document.documentElement.style.setProperty(
+        "--header-h",
+        `${el.offsetHeight}px`
+      );
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Mobile browsers restore the previous scroll offset on hash navigation,
+  // which left the top of the page (and the Back link) under the header.
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    window.scrollTo(0, 0);
+  }, [route]);
 
   const sessionMatch = route.match(/^#\/session\/(\d+)/);
 
   return (
-    <div className="app">
-      <header className="header">
+    <>
+      <header className="header" ref={headerRef}>
         <div className="header-inner">
           <button
             className="brand"
@@ -113,28 +139,30 @@ export default function App() {
         </div>
       </header>
 
-      <main className="fade-in" key={route}>
-        {sessionMatch ? (
-          <Session
-            id={Number(sessionMatch[1])}
-            accountId={accountId}
-            push={push}
-            connect={connect}
-            connecting={connecting}
-          />
-        ) : route.startsWith("#/create") ? (
-          <Create
-            accountId={accountId}
-            push={push}
-            connect={connect}
-            connecting={connecting}
-          />
-        ) : (
-          <Home />
-        )}
-      </main>
+      <div className="app">
+        <main className="fade-in" key={route}>
+          {sessionMatch ? (
+            <Session
+              id={Number(sessionMatch[1])}
+              accountId={accountId}
+              push={push}
+              connect={connect}
+              connecting={connecting}
+            />
+          ) : route.startsWith("#/create") ? (
+            <Create
+              accountId={accountId}
+              push={push}
+              connect={connect}
+              connecting={connecting}
+            />
+          ) : (
+            <Home />
+          )}
+        </main>
+      </div>
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
-    </div>
+    </>
   );
 }
