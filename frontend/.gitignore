@@ -26,3 +26,5 @@ dist-ssr
 # Local env (never commit)
 .env
 .env.local
+.vercel
+.env*
