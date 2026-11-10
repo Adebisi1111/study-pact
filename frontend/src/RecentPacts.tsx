@@ -255,6 +255,9 @@ export default function RecentPacts({ accountId }: { accountId: string }) {
 
       {loading && pacts.length === 0 ? (
         <div className="pact-list" aria-hidden="true">
+          <p className="hint" style={{ marginBottom: 12 }}>
+            Loading pacts from NEAR testnet…
+          </p>
           {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="pact-skeleton">
               <Skeleton height={16} width="55%" />

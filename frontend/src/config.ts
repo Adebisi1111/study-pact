@@ -9,7 +9,7 @@ export const CONTRACT_ID =
 export const NETWORK = import.meta.env.VITE_NETWORK ?? "testnet";
 
 export const RPC_URL =
-  import.meta.env.VITE_RPC_URL ?? "https://rpc.testnet.near.org";
+  import.meta.env.VITE_RPC_URL ?? "https://test.rpc.fastnear.com";
 
 /**
  * Optional: pin the pact shown in the home-page preview card.
