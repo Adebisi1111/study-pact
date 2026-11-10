@@ -13,7 +13,14 @@ export const RPC_URL =
 
 /** Convert NEAR (human) to yoctoNEAR (chain units). 1 NEAR = 1e24 yocto. */
 export function nearToYocto(near: string): string {
-  const [whole, frac = ""] = near.split(".");
-  const padded = (frac + "0".repeat(24)).slice(0, 24);
-  return (BigInt(whole) * 10n ** 24n + BigInt(padded || "0")).toString();
+  return toSmallestUnit(near, 24);
+}
+
+/** Convert a human amount to a token's smallest unit (e.g. 6 for USDC). */
+export function toSmallestUnit(amount: string, decimals: number): string {
+  const [whole, frac = ""] = amount.split(".");
+  const padded = (frac + "0".repeat(decimals)).slice(0, decimals);
+  return (
+    BigInt(whole || "0") * 10n ** BigInt(decimals) + BigInt(padded || "0")
+  ).toString();
 }
