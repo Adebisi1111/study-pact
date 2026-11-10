@@ -147,11 +147,8 @@ code {
   right: 0;
   z-index: 40;
   width: 100%;
-  /* Near-solid so nothing bleeds through, even where backdrop-filter
-     is unsupported or dropped by the CSS minifier. */
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  /* Fully opaque — page text must never show through, even mid-scroll. */
+  background: #ffffff;
   border-bottom: 1px solid var(--border);
 }
 
@@ -428,6 +425,13 @@ code {
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 14px;
+}
+
+.subheading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
 }
 
 /* ---------- Buttons ---------- */

@@ -11,6 +11,7 @@ import type { Token, Quote } from "./near";
 import {
   nsToMs,
   yoctoToNear,
+  nearToYocto,
   shortId,
   formatDuration,
   toSmallestUnit,
@@ -113,6 +114,15 @@ function computePayouts(session: Session, participants: Participant[]) {
       kind: net > 0n ? ("gain" as const) : net < 0n ? ("loss" as const) : ("neutral" as const),
     };
   });
+}
+
+/** Signed NEAR amount: "+0.2000" for gains, "-0.2000" for losses, "0.0000" flat. */
+function formatNet(net: bigint): string {
+  const sign = net > 0n ? "+" : net < 0n ? "-" : "";
+  const abs = net < 0n ? -net : net;
+  const whole = abs / 10n ** 24n;
+  const frac = (abs % 10n ** 24n).toString().padStart(24, "0").slice(0, 4);
+  return `${sign}${whole}.${frac}`;
 }
 
 export default function Session({ id, accountId, push, connect, connecting }: Props) {
@@ -301,9 +311,16 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
 
   const withdraw = async () => {
     if (!requireWallet()) return;
+    if (!withdrawAmount || Number(withdrawAmount) <= 0) {
+      push("Enter an amount greater than 0.", "error");
+      return;
+    }
     setBusy(true);
     try {
-      const result = await withdrawFromIntents(withdrawAmount, accountId);
+      const result = await withdrawFromIntents(
+        nearToYocto(withdrawAmount),
+        accountId
+      );
       afterTx(result, "wNEAR withdrawn to your account");
       setWithdrawAmount("");
     } catch (e) {
@@ -315,9 +332,13 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
 
   const unwrap = async () => {
     if (!requireWallet()) return;
+    if (!unwrapAmount || Number(unwrapAmount) <= 0) {
+      push("Enter an amount greater than 0.", "error");
+      return;
+    }
     setBusy(true);
     try {
-      const result = await unwrapWnear(unwrapAmount);
+      const result = await unwrapWnear(nearToYocto(unwrapAmount));
       afterTx(result, "Unwrapped to NEAR");
       setUnwrapAmount("");
     } catch (e) {
@@ -445,6 +466,14 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
       </section>
 
       <div className="stack section-gap">
+        {/* Joined, waiting for the pact to start */}
+        {joined && !checkedIn && status === "open" && (
+          <section className="card">
+            <div className="card-title">You're in</div>
+            <p className="hint">Check-in opens when the pact starts.</p>
+          </section>
+        )}
+
         {/* Context-aware primary action */}
         {(canJoin || canCheckIn || canSettle) && (
           <section className="card">
@@ -553,45 +582,59 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
 
                     <Stepper steps={quoteSteps} current={0} />
 
-                    <div className="field" style={{ marginTop: 12 }}>
-                      <label className="label" htmlFor="withdraw">Withdraw wNEAR</label>
-                      <div className="unwrap-row">
-                        <input
-                          id="withdraw"
-                          className="input"
-                          inputMode="numeric"
-                          placeholder="amount in yocto"
-                          value={withdrawAmount}
-                          onChange={(e) => setWithdrawAmount(e.target.value.replace(/[^0-9]/g, ""))}
-                        />
-                        <button
-                          className="btn btn-ghost"
-                          onClick={withdraw}
-                          disabled={busy || !withdrawAmount}
-                        >
-                          Withdraw
-                        </button>
+                    <div style={{ marginTop: 12 }}>
+                      <div className="subheading">Withdraw wNEAR</div>
+                      <div className="field">
+                        <label className="label" htmlFor="withdraw">
+                          Amount (NEAR)
+                        </label>
+                        <div className="unwrap-row">
+                          <input
+                            id="withdraw"
+                            className="input"
+                            inputMode="decimal"
+                            placeholder="0.0"
+                            value={withdrawAmount}
+                            onChange={(e) =>
+                              setWithdrawAmount(e.target.value.replace(/[^0-9.]/g, ""))
+                            }
+                          />
+                          <button
+                            className="btn btn-ghost"
+                            onClick={withdraw}
+                            disabled={busy || !withdrawAmount}
+                          >
+                            Withdraw
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="field">
-                      <label className="label" htmlFor="unwrap">Unwrap wNEAR</label>
-                      <div className="unwrap-row">
-                        <input
-                          id="unwrap"
-                          className="input"
-                          inputMode="numeric"
-                          placeholder="amount in yocto"
-                          value={unwrapAmount}
-                          onChange={(e) => setUnwrapAmount(e.target.value.replace(/[^0-9]/g, ""))}
-                        />
-                        <button
-                          className="btn btn-ghost"
-                          onClick={unwrap}
-                          disabled={busy || !unwrapAmount}
-                        >
-                          Unwrap
-                        </button>
+                    <div style={{ marginTop: 12 }}>
+                      <div className="subheading">Unwrap wNEAR</div>
+                      <div className="field">
+                        <label className="label" htmlFor="unwrap">
+                          Amount (NEAR)
+                        </label>
+                        <div className="unwrap-row">
+                          <input
+                            id="unwrap"
+                            className="input"
+                            inputMode="decimal"
+                            placeholder="0.0"
+                            value={unwrapAmount}
+                            onChange={(e) =>
+                              setUnwrapAmount(e.target.value.replace(/[^0-9.]/g, ""))
+                            }
+                          />
+                          <button
+                            className="btn btn-ghost"
+                            onClick={unwrap}
+                            disabled={busy || !unwrapAmount}
+                          >
+                            Unwrap
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -686,7 +729,7 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
                 <div className="participant" key={p.account}>
                   <Avatar name={p.account} />
                   <div className="participant-name">
-                    {shortId(p.account, 12, 8)}
+                    {shortId(p.account, 8, 8)}
                     {p.account === accountId && (
                       <span className="participant-you">you</span>
                     )}
@@ -716,7 +759,7 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
               {payouts.map((p) => (
                 <div className="payout-row" key={p.account}>
                   <div className="payout-name">
-                    {shortId(p.account, 10, 6)}
+                    {shortId(p.account, 8, 8)}
                     {p.account === accountId && (
                       <span className="participant-you">you</span>
                     )}
@@ -730,7 +773,7 @@ export default function Session({ id, accountId, push, connect, connecting }: Pr
                         : "neutral"
                     }`}
                   >
-                    {yoctoToNear(p.net.toString())}
+                    {formatNet(p.net)}
                   </div>
                 </div>
               ))}
