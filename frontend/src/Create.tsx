@@ -1,0 +1,241 @@
+import { useState } from "react";
+import { call, view, sha256Hex } from "./near";
+import { nearToYocto } from "./config";
+import { friendlyError, Spinner, TxLink } from "./ui";
+import { navigate } from "./App";
+
+type Props = {
+  accountId: string;
+  push: (msg: string, type?: "success" | "error" | "info") => void;
+  connect: () => void;
+  connecting: boolean;
+};
+
+export default function Create({ accountId, push, connect, connecting }: Props) {
+  const [title, setTitle] = useState("");
+  const [deposit, setDeposit] = useState("1");
+  const [startMin, setStartMin] = useState("10");
+  const [durationMin, setDurationMin] = useState("60");
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [createdId, setCreatedId] = useState<number | null>(null);
+  const [txHash, setTxHash] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const create = async () => {
+    if (!accountId) {
+      push("Connect your wallet first.", "error");
+      connect();
+      return;
+    }
+    if (!title.trim()) {
+      push("Give your pact a title.", "error");
+      return;
+    }
+    if (!code.trim()) {
+      push("Set a check-in code — you'll reveal it at the session.", "error");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const hash = await sha256Hex(code.trim());
+      const start = Date.now() * 1_000_000 + Number(startMin || 0) * 60 * 1_000_000_000;
+      const end = start + Number(durationMin || 0) * 60 * 1_000_000_000;
+
+      const result = await call("create_session", {
+        title: title.trim(),
+        deposit: nearToYocto(deposit || "0"),
+        start_time: String(start),
+        end_time: String(end),
+        code_hash: hash,
+      });
+
+      const tx = result?.transaction?.hash ?? "";
+      setTxHash(tx);
+      // next_session_id is the *next* id, so ours is one less.
+      const next = await view<{ next_session_id?: number }>("next_session_id", {});
+      const id = next?.next_session_id;
+      const sessionId = id ? Number(id) - 1 : 1;
+      setCreatedId(sessionId);
+      push("Pact created", "success");
+    } catch (e) {
+      push(friendlyError(e), "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const inviteUrl = createdId
+    ? `${window.location.origin}${window.location.pathname}#/session/${createdId}`
+    : "";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      push("Invite link copied", "success");
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      push("Copy failed — select the link manually.", "error");
+    }
+  };
+
+  if (createdId) {
+    return (
+      <div className="fade-in">
+        <button className="back-link" onClick={() => navigate("#/")}>
+          ← Back
+        </button>
+
+        <section className="card card-pad-lg center">
+          <div className="empty-icon" style={{ fontSize: 40 }}>
+            🎉
+          </div>
+          <h2 style={{ fontSize: 26, marginBottom: 10 }}>Pact created</h2>
+          <p className="muted" style={{ marginBottom: 22 }}>
+            Share this link with your study group. Anyone with it can open the
+            pact and join.
+          </p>
+
+          <div
+            className="input"
+            style={{
+              textAlign: "left",
+              wordBreak: "break-all",
+              marginBottom: 14,
+              color: "var(--muted)",
+              fontSize: 14,
+            }}
+          >
+            {inviteUrl}
+          </div>
+
+          <div className="hero-actions">
+            <button className="btn btn-primary" onClick={copy}>
+              {copied ? "Copied ✓" : "Copy invite link"}
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => navigate(`#/session/${createdId}`)}
+            >
+              Open the pact →
+            </button>
+          </div>
+
+          {txHash && (
+            <p className="hint" style={{ marginTop: 18 }}>
+              Transaction: <TxLink hash={txHash} />
+            </p>
+          )}
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fade-in">
+      <button className="back-link" onClick={() => navigate("#/")}>
+        ← Back
+      </button>
+
+      <section className="card">
+        <h2 style={{ fontSize: 24, marginBottom: 6 }}>Create a pact</h2>
+        <p className="hint" style={{ marginBottom: 20 }}>
+          Set the stakes. Your friends deposit the same amount, and the contract
+          splits the pot after the session.
+        </p>
+
+        <div className="field">
+          <label className="label" htmlFor="title">
+            Title
+          </label>
+          <input
+            id="title"
+            className="input"
+            placeholder="e.g. Rust Study Group"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+
+        <div className="input-row">
+          <div className="field">
+            <label className="label" htmlFor="deposit">
+              Deposit (NEAR)
+            </label>
+            <input
+              id="deposit"
+              className="input"
+              inputMode="decimal"
+              placeholder="1"
+              value={deposit}
+              onChange={(e) => setDeposit(e.target.value.replace(/[^0-9.]/g, ""))}
+            />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="code">
+              Check-in code
+            </label>
+            <input
+              id="code"
+              className="input"
+              placeholder="pact123"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="input-row">
+          <div className="field">
+            <label className="label" htmlFor="startMin">
+              Starts in (min)
+            </label>
+            <input
+              id="startMin"
+              className="input"
+              inputMode="numeric"
+              value={startMin}
+              onChange={(e) => setStartMin(e.target.value.replace(/[^0-9]/g, ""))}
+            />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="durationMin">
+              Lasts (min)
+            </label>
+            <input
+              id="durationMin"
+              className="input"
+              inputMode="numeric"
+              value={durationMin}
+              onChange={(e) => setDurationMin(e.target.value.replace(/[^0-9]/g, ""))}
+            />
+          </div>
+        </div>
+
+        <div className="divider" />
+
+        <button
+          className="btn btn-primary btn-block"
+          onClick={create}
+          disabled={busy || connecting}
+        >
+          {busy ? (
+            <>
+              <Spinner size={16} /> Creating…
+            </>
+          ) : (
+            "Create pact"
+          )}
+        </button>
+
+        {!accountId && (
+          <p className="hint center" style={{ marginTop: 12 }}>
+            You'll be asked to connect your wallet to sign the transaction.
+          </p>
+        )}
+      </section>
+    </div>
+  );
+}
