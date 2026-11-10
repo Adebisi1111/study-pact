@@ -1,25 +1,89 @@
 import { NearConnector } from "@hot-labs/near-connect";
-import { JsonRpcProvider } from "near-api-js";
-import { CONTRACT_ID, NETWORK, RPC_URL } from "./config";
+import { CONTRACT_ID, NETWORK, RPC_FALLBACK_URL, RPC_URL } from "./config";
 
 /** Wallet connector — handles sign-in and transactions. */
 export const connector = new NearConnector({
   network: NETWORK as "testnet" | "mainnet",
 });
 
-/** Read-only provider for view calls. */
-export const provider = new JsonRpcProvider({ url: RPC_URL });
+/** Per-request timeout for view calls. */
+const RPC_TIMEOUT_MS = 4000;
 
-/** Call a read-only (view) method on the contract. */
+function base64Encode(text: string): string {
+  const bytes = new TextEncoder().encode(text);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+/** Endpoints to try, primary first, de-duplicated. */
+function rpcEndpoints(): string[] {
+  return Array.from(new Set([RPC_URL, RPC_FALLBACK_URL].filter(Boolean)));
+}
+
+async function rpcQuery(
+  url: string,
+  method: string,
+  args: Record<string, unknown>
+): Promise<unknown> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), RPC_TIMEOUT_MS);
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "query",
+        params: {
+          request_type: "call_function",
+          finality: "final",
+          account_id: CONTRACT_ID,
+          method_name: method,
+          args_base64: base64Encode(JSON.stringify(args)),
+        },
+      }),
+      signal: controller.signal,
+    });
+
+    if (response.status === 429 || response.status === 403) {
+      throw new Error(`RPC responded ${response.status}`);
+    }
+    if (!response.ok) {
+      throw new Error(`RPC responded ${response.status}`);
+    }
+
+    const payload = await response.json();
+    if (payload.error) {
+      throw new Error(payload.error.message ?? "RPC error");
+    }
+    const bytes: number[] = payload.result?.result ?? [];
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(bytes)));
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+/**
+ * Call a read-only (view) method on the contract.
+ *
+ * Tries the primary RPC first; if it fails, times out, or rate-limits
+ * (429/403), retries once against the fallback. Throws only when both fail.
+ */
 export async function view<T extends object = object>(
   method: string,
   args: Record<string, unknown> = {}
 ): Promise<T | undefined> {
-  return provider.callFunction<T>({
-    contractId: CONTRACT_ID,
-    method,
-    args,
-  });
+  let lastError: unknown = null;
+  for (const url of rpcEndpoints()) {
+    try {
+      return (await rpcQuery(url, method, args)) as T;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError ?? new Error("No RPC endpoint available");
 }
 
 /**
