@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { view, getLatestSessionId } from "./near";
-import {
-  HIDE_SESSION_IDS,
-  nsToMs,
-  yoctoToNear,
-} from "./config";
+import { HIDE_SESSION_IDS, nsToMs, yoctoToNear } from "./config";
 import { Chip, Skeleton } from "./ui";
 import { navigate } from "./App";
 import { ArrowRightIcon, UsersIcon } from "./icons";
@@ -26,8 +22,21 @@ type Pact = { session: Session; participants: Participant[] };
 
 type Status = "open" | "live" | "ended" | "settled";
 
+/** Slim shape persisted in sessionStorage — public chain data only. */
+type CachedPact = {
+  id: number;
+  title: string;
+  host: string;
+  deposit: string;
+  start_time: string;
+  end_time: string;
+  settled: boolean;
+  participants: Participant[];
+};
+
 const MAX_PACTS = 10;
 const CONCURRENCY = 4;
+const CACHE_KEY = "studypact:recent-pacts-v1";
 
 function getStatus(session: Session, now: number): Status {
   if (session.settled) return "settled";
@@ -80,20 +89,75 @@ async function fetchPact(id: number): Promise<Pact | null> {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/* sessionStorage cache — public chain data only, no keys or secrets          */
+/* -------------------------------------------------------------------------- */
+
+function toCached(pacts: Pact[]): CachedPact[] {
+  return pacts.map((pact) => ({
+    id: pact.session.id,
+    title: pact.session.title,
+    host: pact.session.host,
+    deposit: pact.session.deposit,
+    start_time: pact.session.start_time,
+    end_time: pact.session.end_time,
+    settled: pact.session.settled,
+    participants: pact.participants,
+  }));
+}
+
+function fromCached(items: CachedPact[]): Pact[] {
+  return items.map((item) => ({
+    session: {
+      id: item.id,
+      title: item.title,
+      host: item.host,
+      deposit: item.deposit,
+      start_time: item.start_time,
+      end_time: item.end_time,
+      code_hash: "",
+      settled: item.settled,
+    },
+    participants: item.participants ?? [],
+  }));
+}
+
+function readCache(): Pact[] {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return fromCached(parsed as CachedPact[]).slice(0, MAX_PACTS);
+  } catch {
+    return [];
+  }
+}
+
+function writeCache(pacts: Pact[]): void {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(toCached(pacts)));
+  } catch {
+    /* storage blocked or full — caching is best-effort */
+  }
+}
+
 export default function RecentPacts({ accountId }: { accountId: string }) {
-  const [pacts, setPacts] = useState<Pact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [pacts, setPacts] = useState<Pact[]>(() => readCache());
+  const [loading, setLoading] = useState(() => readCache().length === 0);
+  const [refreshing, setRefreshing] = useState(() => readCache().length > 0);
   const [failed, setFailed] = useState(false);
   const [tab, setTab] = useState<"recent" | "mine">("recent");
   const [now, setNow] = useState(() => Date.now());
 
   const load = useCallback(async () => {
-    setLoading(true);
+    setRefreshing(true);
     setFailed(false);
     try {
       const latest = await getLatestSessionId();
       if (!latest || latest <= 0) {
         setPacts([]);
+        writeCache([]);
         return;
       }
 
@@ -103,14 +167,37 @@ export default function RecentPacts({ accountId }: { accountId: string }) {
         ids.push(id);
       }
 
-      const results = await mapWithConcurrency(ids, CONCURRENCY, fetchPact);
-      setPacts(results.filter((pact): pact is Pact => pact !== null));
+      let loaded = 0;
+      await mapWithConcurrency(ids, CONCURRENCY, async (id) => {
+        const pact = await fetchPact(id);
+        if (!pact) return;
+        loaded += 1;
+        // Render each card as soon as its own data lands.
+        setPacts((current) => {
+          if (current.some((entry) => entry.session.id === pact.session.id)) {
+            return current;
+          }
+          return [...current, pact].sort(
+            (a, b) => b.session.id - a.session.id
+          );
+        });
+      });
+
+      if (loaded === 0 && ids.length > 0) setFailed(true);
     } catch {
       setFailed(true);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
+
+  // Persist the settled list for the next visit.
+  useEffect(() => {
+    if (!loading && !refreshing && pacts.length > 0) {
+      writeCache(pacts);
+    }
+  }, [loading, refreshing, pacts]);
 
   useEffect(() => {
     load();
@@ -121,6 +208,7 @@ export default function RecentPacts({ accountId }: { accountId: string }) {
     return () => window.clearInterval(timer);
   }, []);
 
+  // "My pacts" only needs the participant checks once a wallet is connected.
   const mine = accountId
     ? pacts.filter(
         (pact) =>
@@ -159,7 +247,13 @@ export default function RecentPacts({ accountId }: { accountId: string }) {
         )}
       </div>
 
-      {loading ? (
+      {refreshing && !loading && (
+        <p className="hint" style={{ marginBottom: 10 }}>
+          Refreshing…
+        </p>
+      )}
+
+      {loading && pacts.length === 0 ? (
         <div className="pact-list" aria-hidden="true">
           {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="pact-skeleton">
@@ -169,7 +263,7 @@ export default function RecentPacts({ accountId }: { accountId: string }) {
             </div>
           ))}
         </div>
-      ) : failed ? (
+      ) : failed && pacts.length === 0 ? (
         <div className="empty" style={{ padding: "20px 0" }}>
           <div className="empty-title">Couldn't load pacts</div>
           <p className="hint" style={{ marginBottom: 14 }}>
