@@ -10,13 +10,13 @@ Built at **NEAR HACKATHON** ([nearhackathon.com](https://nearhackathon.com)) —
 
 I'm finishing my final year, and I kept planning study sessions that I then skipped. Reminders and calendar invites didn't work; losing money does.
 
-While working on my final year project, I watched study groups fall apart again and again. Everyone agreed on a time, a few people showed up, and the rest had an excuse. [ONE TRUE DETAIL, e.g. the course or group size]. Reminders and group chats didn't fix it, but I noticed people take commitments seriously when something is at stake.
+While working on my final year project, I watched study groups fall apart again and again. Everyone agreed on a time, a few people showed up, and the rest had an excuse. <YOU DECIDE: one true detail, or DELETE>. Reminders and group chats didn't fix it, but I noticed people take commitments seriously when something is at stake.
 
 Study Pact puts that stake on-chain. The contract holds the deposits and pays out automatically, so there are no arguments about who actually showed up.
 
 ## Hackathon
 
-Study Pact was built during the **NEAR HACKATHON** window (1–14 November 2026); every commit in this repository was made inside that window.
+Study Pact was built independently for NEAR HACKATHON, during the event window (1-14 November 2026).
 
 ## How it works
 
