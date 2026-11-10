@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { navigate } from "./App";
-import { BookIcon, ArrowRightIcon, SearchIcon } from "./icons";
+import HomePactCard from "./HomePactCard";
+import { ArrowRightIcon, BookIcon, LayersIcon, SearchIcon } from "./icons";
 
 const HOW_IT_WORKS = [
   {
@@ -26,6 +27,12 @@ export default function Home() {
     navigate(`#/session/${id}`);
   };
 
+  const scrollToHow = () => {
+    document
+      .getElementById("how-it-works")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div>
       {/* Hero */}
@@ -49,16 +56,24 @@ export default function Home() {
             Create a pact
             <ArrowRightIcon size={15} />
           </button>
-          <a className="btn btn-ghost" href="#how-it-works">
+          <button className="btn btn-ghost" onClick={scrollToHow}>
             How it works
-          </a>
+          </button>
         </div>
+        <p className="feature-line">
+          <LayersIcon size={14} />
+          Friends can join from any token on any chain via NEAR Intents (quote
+          preview, testnet).
+        </p>
       </section>
 
       <div className="spectral" />
 
+      {/* Live preview of a real pact (hidden if the contract call fails) */}
+      <HomePactCard />
+
       {/* How it works */}
-      <section className="card" id="how-it-works">
+      <section className="card section-gap" id="how-it-works">
         <div className="card-title">How it works</div>
         <div className="steps">
           {HOW_IT_WORKS.map((step, index) => (

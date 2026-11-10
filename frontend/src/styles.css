@@ -141,7 +141,9 @@ code {
   top: 0;
   z-index: 40;
   width: 100%;
-  background: rgba(255, 255, 255, 0.8);
+  /* Near-solid so nothing bleeds through, even where backdrop-filter
+     is unsupported or dropped by the CSS minifier. */
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
@@ -249,6 +251,131 @@ code {
     flex-direction: row;
     justify-content: center;
   }
+}
+
+/* Feature line under the hero CTAs */
+
+.feature-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 18px auto 0;
+  max-width: 540px;
+  font-size: 13px;
+  color: var(--subtle);
+  text-align: center;
+}
+
+.feature-line svg {
+  flex: none;
+  color: var(--accent-hover);
+}
+
+/* Home pact preview (live contract data) */
+
+.home-pact {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.15s var(--ease), box-shadow 0.15s ease;
+}
+
+.home-pact:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-pop);
+}
+
+.home-pact:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.home-pact-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.home-pact-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+
+.home-pact h3 {
+  font-size: 17px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-pact-amount {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.home-pact-unit {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+.home-pact-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 12px 0 14px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.home-pact-meta b {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.home-pact-avatars {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.home-pact-avatars .avatar {
+  margin-right: -8px;
+  border: 2px solid #fff;
+}
+
+.home-pact-avatars .avatar-more {
+  margin-left: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.home-pact-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-hover);
 }
 
 /* Spectral rule */

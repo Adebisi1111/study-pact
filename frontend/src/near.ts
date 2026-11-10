@@ -22,6 +22,22 @@ export async function view<T extends object = object>(
   });
 }
 
+/**
+ * The id of the most recent session. The contract's `next_session_id` returns
+ * a bare u64 (JSON number), so the latest existing session is one less.
+ * Returns 0 when no session exists yet.
+ */
+export async function getLatestSessionId(): Promise<number> {
+  const raw: unknown = await view("next_session_id", {});
+  let next = 0;
+  if (typeof raw === "number") next = raw;
+  else if (typeof raw === "string") next = Number(raw);
+  else if (raw && typeof raw === "object" && "next_session_id" in raw) {
+    next = Number((raw as { next_session_id: number | string }).next_session_id);
+  }
+  return Number.isFinite(next) && next > 0 ? next - 1 : 0;
+}
+
 /** Call a change method. depositYocto defaults to "0". */
 export async function call(
   method: string,

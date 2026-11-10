@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { call, view, sha256Hex } from "./near";
+import { call, getLatestSessionId, sha256Hex } from "./near";
 import { nearToYocto } from "./config";
 import { friendlyError, Spinner, TxLink } from "./ui";
 import { navigate } from "./App";
@@ -55,9 +55,7 @@ export default function Create({ accountId, push, connect, connecting }: Props) 
       const tx = result?.transaction?.hash ?? "";
       setTxHash(tx);
       // next_session_id is the *next* id, so ours is one less.
-      const next = await view<{ next_session_id?: number }>("next_session_id", {});
-      const id = next?.next_session_id;
-      const sessionId = id ? Number(id) - 1 : 1;
+      const sessionId = (await getLatestSessionId()) || 1;
       setCreatedId(sessionId);
       push("Pact created", "success");
     } catch (e) {

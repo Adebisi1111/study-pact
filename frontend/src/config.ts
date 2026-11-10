@@ -11,6 +11,14 @@ export const NETWORK = import.meta.env.VITE_NETWORK ?? "testnet";
 export const RPC_URL =
   import.meta.env.VITE_RPC_URL ?? "https://rpc.testnet.near.org";
 
+/**
+ * Optional: pin the pact shown in the home-page preview card.
+ * When unset, the latest session (next_session_id - 1) is used.
+ */
+export const DEMO_SESSION_ID = import.meta.env.VITE_DEMO_SESSION_ID
+  ? Number(import.meta.env.VITE_DEMO_SESSION_ID)
+  : null;
+
 /** Convert NEAR (human) to yoctoNEAR (chain units). 1 NEAR = 1e24 yocto. */
 export function nearToYocto(near: string): string {
   return toSmallestUnit(near, 24);
