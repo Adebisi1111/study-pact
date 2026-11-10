@@ -157,7 +157,7 @@ export default function App() {
               connecting={connecting}
             />
           ) : (
-            <Home />
+            <Home accountId={accountId} />
           )}
         </main>
       </div>

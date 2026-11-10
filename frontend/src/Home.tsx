@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { navigate } from "./App";
 import HomePactCard from "./HomePactCard";
+import RecentPacts from "./RecentPacts";
 import { ArrowRightIcon, BookIcon, LayersIcon, SearchIcon } from "./icons";
 
 const HOW_IT_WORKS = [
@@ -18,7 +19,7 @@ const HOW_IT_WORKS = [
   },
 ];
 
-export default function Home() {
+export default function Home({ accountId }: { accountId: string }) {
   const [openId, setOpenId] = useState("");
 
   const openPact = () => {
@@ -71,6 +72,11 @@ export default function Home() {
 
       {/* Live preview of a real pact (hidden if the contract call fails) */}
       <HomePactCard />
+
+      {/* Recent pacts */}
+      <div className="section-gap">
+        <RecentPacts accountId={accountId} />
+      </div>
 
       {/* How it works */}
       <section className="card section-gap" id="how-it-works">

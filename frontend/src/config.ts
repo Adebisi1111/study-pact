@@ -19,6 +19,17 @@ export const DEMO_SESSION_ID = import.meta.env.VITE_DEMO_SESSION_ID
   ? Number(import.meta.env.VITE_DEMO_SESSION_ID)
   : null;
 
+/**
+ * Session ids to hide from the home page (test pacts, etc.).
+ * Comma-separated in VITE_HIDE_SESSION_IDS.
+ */
+export const HIDE_SESSION_IDS: number[] = String(
+  import.meta.env.VITE_HIDE_SESSION_IDS ?? "1,2,3,5"
+)
+  .split(",")
+  .map((value: string) => Number(value.trim()))
+  .filter((value: number) => Number.isFinite(value) && value > 0);
+
 /** Convert NEAR (human) to yoctoNEAR (chain units). 1 NEAR = 1e24 yocto. */
 export function nearToYocto(near: string): string {
   return toSmallestUnit(near, 24);

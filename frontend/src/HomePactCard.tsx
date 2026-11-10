@@ -76,20 +76,19 @@ export default function HomePactCard() {
           return;
         }
 
-        const s = await view<Session>("get_session", { session_id: id });
+        const [s, p] = await Promise.all([
+          view<Session>("get_session", { session_id: id }),
+          view<Participant[]>("get_participants", { session_id: id }).catch(
+            () => [] as Participant[]
+          ),
+        ]);
         if (!s) {
           setFailed(true);
           return;
         }
-
-        // Participants are optional; run alongside the session render.
-        const participantsPromise = view<Participant[]>("get_participants", {
-          session_id: id,
-        }).catch(() => [] as Participant[]);
-
         if (!cancelled) {
           setSession(s);
-          setParticipants(await participantsPromise ?? []);
+          setParticipants(p ?? []);
         }
       } catch {
         if (!cancelled) setFailed(true);
