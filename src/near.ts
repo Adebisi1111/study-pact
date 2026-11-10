@@ -160,3 +160,30 @@ export async function unwrapWnear(amountYocto: string) {
   });
 }
 
+/**
+ * Withdraw wNEAR from the Intents balance (intents.near) into the account.
+ * `recipientType: INTENTS` delivers here, not to the account's wNEAR.
+ * Requires 1 yoctoNEAR attached.
+ */
+export async function withdrawFromIntents(amountYocto: string, receiverId: string) {
+  const wallet = await connector.wallet();
+  return wallet.signAndSendTransaction({
+    receiverId: "intents.near",
+    actions: [
+      {
+        type: "FunctionCall",
+        params: {
+          methodName: "ft_withdraw",
+          args: {
+            token: "wrap.near", // no prefix for direct calls
+            receiver_id: receiverId,
+            amount: amountYocto,
+          },
+          gas: "100000000000000", // 100 TGas
+          deposit: "1", // 1 yoctoNEAR
+        },
+      },
+    ],
+  });
+}
+

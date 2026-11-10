@@ -7,6 +7,7 @@ import {
   getTokens,
   requestQuote,
   unwrapWnear,
+  withdrawFromIntents,
 } from "./near";
 import type { Token, Quote } from "./near";
 import { nearToYocto, toSmallestUnit } from "./config";
@@ -56,6 +57,7 @@ export default function App() {
   );
   const [quote, setQuote] = useState<Quote | null>(null);
   const [unwrapAmount, setUnwrapAmount] = useState("");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
 
   // Load 1Click tokens on mount, default to Ethereum USDC.
   useEffect(() => {
@@ -97,6 +99,20 @@ export default function App() {
     try {
       const result = await unwrapWnear(unwrapAmount);
       setMessage(`Unwrapped: ${result?.transaction?.hash ?? "ok"}`);
+    } catch (e) {
+      setMessage(`Error: ${e}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Withdraw wNEAR from the Intents balance into the signed-in account. */
+  const withdrawFromIntentsHandler = async () => {
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await withdrawFromIntents(withdrawAmount, accountId);
+      setMessage(`Withdrawn: ${result?.transaction?.hash ?? "ok"}`);
     } catch (e) {
       setMessage(`Error: ${e}`);
     } finally {
@@ -376,13 +392,31 @@ export default function App() {
           </div>
         )}
 
-        <h3>3 steps to join with another token</h3>
+        <h3>4 steps to join with another token</h3>
         <ol className="steps">
           <li>
             <strong>Swap</strong> — send {swapAmount}{" "}
             {tokens.find((t) => t.assetId === originAsset)?.symbol ?? "token"}{" "}
-            on the origin chain to the 1Click deposit address. Receive ≈{" "}
-            {quote?.amountOutFormatted ?? "…"} wNEAR on NEAR.
+            on the origin chain to the 1Click deposit address. The quote uses{" "}
+            <code>recipientType: INTENTS</code>, so the wNEAR lands in your{" "}
+            <strong>Intents balance</strong> (intents.near), not your account.
+          </li>
+          <li>
+            <strong>Withdraw from Intents</strong> — move wNEAR from the Intents
+            balance into your NEAR account.
+            <div className="unwrap-row">
+              <input
+                placeholder="wNEAR amount (yocto)"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+              />
+              <button
+                onClick={withdrawFromIntentsHandler}
+                disabled={busy || !accountId || !withdrawAmount}
+              >
+                Withdraw
+              </button>
+            </div>
           </li>
           <li>
             <strong>Unwrap wNEAR</strong> — convert wNEAR to native NEAR.
@@ -405,6 +439,11 @@ export default function App() {
             the session ID.
           </li>
         </ol>
+        <p className="hint">
+          Note: <code>recipientType: DESTINATION_CHAIN</code> (which would deliver
+          straight to the account) currently returns an error from the 1Click API
+          for NEAR routes, so the quote uses <code>INTENTS</code>.
+        </p>
       </section>
     </div>
   );
