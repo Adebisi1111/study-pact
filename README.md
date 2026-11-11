@@ -8,7 +8,7 @@ Built at **NEAR HACKATHON** ([nearhackathon.com](https://nearhackathon.com)) —
 
 ## Why I built it
 
-While working on my final year project, I watched study groups fall apart again and again. Everyone agreed on a time, a few people showed up, and the rest had an excuse. Reminders and group chats didn't fix it, but I noticed people take commitments seriously when something is at stake.
+Study groups fall apart in a familiar way. Everyone agrees on a time, a few people show up, and the rest have an excuse. Reminders and group chats don't fix it, but a small stake might. People tend to take commitments more seriously when something is on the line.
 
 Study Pact puts that stake on-chain. The contract holds the deposits and enforces the payout rules automatically. The host runs check-in, which is a known limitation (see Limitations).
 
