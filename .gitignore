@@ -1,0 +1,12 @@
+# Local environment (never commit)
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules
+dist
+target
+
+# OS noise
+.DS_Store
