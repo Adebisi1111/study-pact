@@ -4,11 +4,13 @@
 
 Study Pact is a commitment contract for study sessions. Everyone puts in a small deposit. If you show up, you get your deposit back plus an equal share of what the no-shows forfeited. If nobody shows up, everyone is refunded.
 
-The contract holds the deposits and pays out automatically, so there are no arguments about who actually attended. The host runs check-in, which is a known limitation (see Known limitations).
+The contract holds the deposits and pays out by fixed rules. The host runs check-in, which is a known limitation (see Known limitations).
 
 ## Hackathon
 
 All application and contract code was written during the event window (1-14 November 2026). The visual design uses a colour and typography system (tokens in frontend/src/styles.css) that the author has used before.
+
+The contract was scaffolded with `cargo near new`; third-party libraries are listed in `contract/Cargo.toml` and `frontend/package.json`.
 
 ## How it works
 
@@ -29,46 +31,45 @@ The frontend is deployed at https://studypakt.vercel.app and runs against NEAR t
 
 ## Try it
 
-### Setup once
+The fastest way is the live site — no setup and no build. It runs on NEAR testnet, so you need a wallet and a little testnet NEAR from a faucet such as near-faucet.io.
 
-- Do: `cd frontend && cp .env.example .env && npm install && npm run dev`
-- See: Vite ready and a localhost URL
+### 1. Connect
 
-### 1. Connect wallet
+- Do: open https://studypakt.vercel.app and click **Connect**, then pick a wallet and sign in
+- See: your account ID in the header, shortened to its first and last few characters
 
-- Do: click Connect wallet, pick a wallet, sign in
-- See: your account ID with a Disconnect button
+### 2. Create a pact
 
-### 2. Create a session
+- Do: click **Create a pact**, then fill in **Title**, **Deposit (NEAR)**, **Check-in code**, **Starts in (min)** and **Lasts (min)** and click **Create pact**
+- See: a **Pact created!** screen with a **Share link** and the buttons **Copy link** and **Open the pact**. Only the sha256 hash of the code is stored on-chain.
 
-- Do: title `Rust Study Group`, deposit `1`, duration `5`, code `pact123`, then Create
-- See: a transaction hash. The code is stored on-chain only as a sha256 hash.
+### 3. Join from a second wallet
 
-### 3. Join
-
-- Do: open the session and choose Join
-- See: the wallet asks for exactly 1 NEAR. After signing, a transaction hash.
+- Do: open the share link in another browser, or send it to a friend, and click **Join for 1 NEAR** — the amount is the pact's deposit
+- See: the wallet asks for exactly that deposit. After signing, a transaction hash.
 
 ### 4. Check in
 
-- Do: enter the code `pact123` and choose Check in
-- See: a transaction hash. You are marked attended.
+- Do: once the pact is Live, enter the code the host revealed and click **Check in**
+- See: a transaction hash. You are marked as attended.
 
 ### 5. Settle
 
-- Do: after the end time, choose Settle
-- See: a transaction hash. Attendees split the pool; no-shows lose their deposit.
+- Do: after the pact ends, click **Settle**
+- See: a transaction hash and a **Payouts** card listing every participant with a signed amount — gains and losses.
 
-### 6. Join with another token
+### 6. Pay with any token
 
-- Do: in Join with any token, pick a token, enter an amount, choose Preview swap
-- See: a dry quote showing the expected wNEAR output. Nothing is swapped and no funds move.
+- Do: expand **Pay with any token**, pick a token, enter an amount and click **Preview swap**
+- See: a **Quote (dry run)** card showing the expected wNEAR output. Nothing is swapped and no funds move.
+
+To open a pact by number instead of a link, use **Open a pact** on the home page: paste the **Pact ID** and click **Open pact**.
 
 ## NEAR integration
 
 | Piece | Choice |
 |---|---|
-| Contract | Rust with near-sdk 5.30, built and deployed with cargo-near |
+| Contract | Rust with near-sdk 5.30.1, built and deployed with cargo-near |
 | Wallet | @hot-labs/near-connect, which passes the network to the wallet and lets it broadcast |
 | Read calls | FastNear testnet RPC, with https://rpc.testnet.near.org as a public fallback |
 | Cross-chain join | NEAR Intents 1Click API, dry-quote preview only |
